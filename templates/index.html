@@ -1,0 +1,110 @@
+<!-- templates/index.html -->  
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">  
+    <title>Zip Code Input</title>  
+</head>  
+<body>  
+    <header>  
+        <h1>Zip Code Input Interface</h1>  
+    </header>  
+    <main>   
+        <div class="input-container">  
+            <input type="text" id="zipCodeInput" placeholder="Enter zip codes separated by spaces" />  
+            <button id="submitButton">Submit</button>  
+        </div>   
+
+        <!-- Progress Container -->  
+        <div id="progressContainer" class="progress-container" style="display:none;">  
+            <h3 id="progressMessage"></h3>  
+            <div class="progress-bar">  
+                <div id="progressBar" class="progress" style="width: 0%;"></div>  
+            </div>  
+        </div>  
+        <div id="resultsContainer" style="display:none;">  
+            <table id="resultsTable" border="1">  
+                <thead>  
+                    <tr>  
+                        <th>Name</th>  
+                        <th>Email</th>  
+                        <th>Phone</th>  
+                        <th>Total Sale</th>  
+                        <th>Total Volume</th>  
+                        <th>Median Sales Price</th>  
+                    </tr>  
+                </thead>  
+                <tbody id="resultsBody"></tbody>  
+            </table>  
+        </div>  
+    </main>  
+    <script>  
+        document.getElementById('submitButton').addEventListener('click', function() {  
+        const zipCodes = document.getElementById('zipCodeInput').value;  
+
+        // Reset progress bar and message  
+        document.getElementById('progressContainer').style.display = 'block'; // Show progress container  
+        document.getElementById('progressBar').style.width = '0%'; // Reset progress bar  
+        document.getElementById('progressMessage').innerText = 'Processing started...'; // Reset message  
+
+        fetch('/process_zip_codes', {  
+            method: 'POST',  
+            headers: {  
+                'Content-Type': 'application/json'  
+            },  
+            body: JSON.stringify({ zip_codes: zipCodes })  
+        })  
+        .then(() => {  
+            checkProgress();  // Start checking for progress  
+        })  
+        .catch(error => {  
+            console.error('Error:', error);  
+        });  
+    });
+        function checkProgress() {  
+            fetch('/task_status')  
+                .then(response => response.json())  
+                .then(data => {  
+                    document.getElementById('progressMessage').innerText = data.message;  
+                    document.getElementById('progressBar').style.width = data.progress + '%';  
+
+                    if (data.completed) {  
+                        // Trigger file download  
+                        window.location.href = '/download'; 
+                        fetch('/get_total_result')
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data)
+                            displayResults(data);
+                        }) 
+                    } else if (data.progress < 100) {  
+                        setTimeout(checkProgress, 1000);  // Check again after 1 second  
+                    }  
+                })  
+                .catch(error => {  
+                    console.error('Error fetching progress:', error);  
+                });  
+        }  
+
+        function displayResults(data) {  
+            const resultsBody = document.getElementById('resultsBody');  
+            resultsBody.innerHTML = ''; // Clear previous results  
+            document.getElementById('resultsContainer').style.display = 'block'; // Show results container  
+
+            data.full_names.forEach((name, index) => {  
+                const row = resultsBody.insertRow();  
+                row.innerHTML = `  
+                    <td>${name}</td>  
+                    <td>${data.emails[index]}</td>  
+                    <td>${data.phones[index]}</td>  
+                    <td>${data.total_sales[index]}</td>  
+                    <td>${data.total_volumes[index]}</td>  
+                    <td>${data.median_sales_prices[index]}</td>  
+                `;  
+            });  
+        } 
+    </script>  
+</body>  
+</html>
