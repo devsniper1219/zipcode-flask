@@ -1,21 +1,19 @@
-{  
-  "version": 2,  
-  "builds": [  
-    {  
-      "src": "index.py",  // Update to point to your main Flask file  
-      "use": "@vercel/python"  
-    }  
-  ],  
-  "routes": [  
-    {  
-      "src": "/(.*)",  
-      "dest": "index.py"  // All requests routed to index.py  
-    }  
-  ],  
-  "static": [  
-    {  
-      "src": "/static/(.*)",  
-      "dest": "/static/\$1"  
-    }  
-  ]  
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "index.py"
+    }
+  ]
 }
